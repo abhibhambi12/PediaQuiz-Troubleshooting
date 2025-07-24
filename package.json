@@ -1,0 +1,9 @@
+{
+  "name": "pediaquiz-monorepo",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "functions",
+    "packages/*"
+  ]
+}
