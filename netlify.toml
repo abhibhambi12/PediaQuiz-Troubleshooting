@@ -1,5 +1,14 @@
-[build]
-  command = "npm run build"
-  publish = "frontend/dist"
-  base = "frontend"
+# PediaQuiz_Clean/netlify.toml
 
+[build]
+  # This is the base directory of your frontend app.
+  # Netlify will run the build command from here.
+  base = "frontend"
+  
+  # The command to build your site.
+  command = "npm run build"
+  
+  # The directory to publish, relative to the base directory.
+  # Since the build output is in 'frontend/dist', and the base is 'frontend',
+  # this should just be 'dist'.
+  publish = "dist"
