@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Secure the new generationJobs collection
+    match /generationJobs/{jobId} {
+      // A user can create a job if their UID matches the one in the new document.
+      allow create: if request.auth.uid == request.resource.data.uid;
+      // The owner of the job can read and update it.
+      allow read, update: if request.auth.uid == resource.data.uid;
+    }
+
+    // Previous rules for other collections (users, etc.) go here.
+    // Make sure your existing rules for MasterMCQ, Topics, etc. are also present.
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    match /MasterMCQ/{mcqId} {
+      allow read: if request.auth != null;
+      // Deletion is handled by a secured cloud function, so client-side delete is disallowed.
+      allow create, update, delete: if false;
+    }
+
+    match /Topics/{topicId} {
+        allow read: if true; // Topics are public
+        allow create, update, delete: if false; // Managed by admin functions
+    }
+  }
+}

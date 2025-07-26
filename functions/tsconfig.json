@@ -7,13 +7,13 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "baseUrl": ".",
-    "paths": {
-      "@pediaquiz/types": ["../packages/types"]
-    }
+    "rootDir": "src"
   },
   "compileOnSave": true,
   "include": [
     "src"
+  ],
+  "references": [
+    { "path": "../packages/types" }
   ]
 }
