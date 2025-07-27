@@ -1,3 +1,4 @@
+
 // /home/abhibhambi12/PediaQuiz/frontend/src/pages/StatsPage.tsx
 
 import { useMemo, useState } from 'react';
@@ -134,7 +135,7 @@ const StatsPage = () => {
                 <div className="mt-6">
                     <h3 className="text-lg font-semibold mb-2">Deep Dive by Topic</h3>
                     <div className="flex flex-wrap gap-2">
-                        {prepDnaData.topicPerformance.map(topic => (
+                        {prepDnaData.topicPerformance.map((topic: {id: string, topic: string}) => ( // FIX: Explicitly type topic
                             <button key={topic.id} onClick={() => setSelectedTopicId(topic.id)} className={`px-3 py-1 rounded-full text-sm ${selectedTopicId === topic.id ? "bg-sky-500 text-white" : "bg-slate-200 dark:bg-slate-700"}`}>
                                 {topic.topic}
                             </button>

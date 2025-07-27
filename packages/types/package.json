@@ -1,11 +1,16 @@
 {
   "name": "@pediaquiz/types",
   "version": "1.0.0",
-  "main": "index.ts",
+  "description": "Shared TypeScript types for PediaQuiz monorepo",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.2.2"
   }
 }

@@ -7,13 +7,16 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "rootDir": "src"
+    "baseUrl": ".",
+    "paths": {
+      // FIX: Correctly reference the new package name and location
+      "@pediaquiz/types": ["../packages/types/src"] 
+    }
   },
   "compileOnSave": true,
+  // --- IMPORTANT PATH FIXES ---
   "include": [
-    "src"
-  ],
-  "references": [
-    { "path": "../packages/types" }
+    "src", // Include all .ts files in src
+    "src/types" // Include the new types folder
   ]
 }

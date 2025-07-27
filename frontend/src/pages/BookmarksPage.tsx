@@ -1,3 +1,4 @@
+
 // /home/abhibhambi12/PediaQuiz/frontend/src/pages/BookmarksPage.tsx
 
 import { useMemo, useState } from 'react';
@@ -6,13 +7,13 @@ import { BookmarkIcon, ChevronDownIcon, ChevronRightIcon } from '../components/I
 import type { MCQ, Topic, Chapter } from '@/types.ts';
 
 // This interface describes a Chapter that has been enhanced with bookmark-specific data
-interface AugmentedChapter extends Chapter {
+interface AugmentedChapter extends Chapter { // Extend Chapter to inherit id, name, mcqCount
     bookmarkedMcqCount: number;
     mcqs: MCQ[];
 }
 
 // This interface describes a Topic that holds our augmented chapters
-interface AugmentedTopic extends Omit<Topic, 'chapters'> {
+interface AugmentedTopic extends Omit<Topic, 'chapters'> { // Omit 'chapters' from base Topic
     bookmarkedMcqCount: number;
     chapters: AugmentedChapter[];
 }
@@ -50,7 +51,7 @@ const BookmarksPage = () => {
                 if (chapterBookmarks.length > 0) {
                     chapterBookmarks.sort((a, b) => a.question.localeCompare(b.question));
                     topicBookmarks.push({
-                        ...chapter,
+                        ...chapter, // Spread existing chapter properties (id, name, mcqCount)
                         bookmarkedMcqCount: chapterBookmarks.length,
                         mcqs: chapterBookmarks,
                     });
@@ -59,6 +60,7 @@ const BookmarksPage = () => {
             });
 
             if (totalTopicBookmarks > 0) {
+                // Ensure sorting by name for topicBookmarks (which are AugmentedChapter)
                 topicBookmarks.sort((a, b) => a.name.localeCompare(b.name));
                 hierarchy.push({ ...topic, bookmarkedMcqCount: totalTopicBookmarks, chapters: topicBookmarks });
             }

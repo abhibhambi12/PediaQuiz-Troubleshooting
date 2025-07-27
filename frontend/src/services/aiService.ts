@@ -1,17 +1,19 @@
-// /workspaces/PediaQuiz/src/services/aiService.ts
 
 import { functions } from '../firebase';
 import { httpsCallable } from 'firebase/functions';
 import type { Topic, MCQ, Flashcard, AwaitingReviewData, AttemptedMCQs } from '@/types.ts';
 
 // --- STUDENT-FACING FEATURES ---
+// Updated interface to include mcqId for caching on the backend
 interface MCQDetailsForExplanation {
+  mcqId: string; // Add mcqId for caching
   question: string;
   options: string[];
   answer: string;
 }
 export async function getMCQExplanation(mcq: MCQDetailsForExplanation): Promise<string> {
   try {
+    // Pass mcqId along with other MCQ details to the callable function
     const callable = httpsCallable<MCQDetailsForExplanation, { explanation: string }>(functions, "generateMCQExplanation");
     const result = await callable(mcq);
     return result.data.explanation;

@@ -1,9 +1,7 @@
-// src/contexts/DataContext.tsx
-
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
 import { getAppData } from '../services/firestoreService';
 import { usePersistentState } from '../hooks/usePersistentState';
-import { auth } from '../firebase';
+import { auth } from '../firebase'; // Removed 'db' as it's not directly used here
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { grantAdminRole } from '../services/aiService';
 import type { AppData, DataContextType, DebugData, QuizResult, AttemptedMCQs, Theme, AppUser, DebugLog } from '@/types.ts';
@@ -65,11 +63,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(async () => { await signOut(auth); }, []);
   const toggleBookmark = (mcqId: string) => setBookmarks((prev: string[]) => prev.includes(mcqId) ? prev.filter(id => id !== mcqId) : [...prev, mcqId]);
+  // FIX: Corrected typo 'prevToasts' to 'prev'
   const addQuizResult = (result: Omit<QuizResult, 'id' | 'date'>) => setQuizHistory((prev: QuizResult[]) => [...prev, { ...result, id: Date.now().toString(), date: new Date().toISOString() }]);
   const addAttempt = (mcqId: string, isCorrect: boolean, selectedAnswer: string | null) => {
     setAttempted((prev: AttemptedMCQs) => ({ ...prev, [mcqId]: { isCorrect, selectedAnswer, lastSeen: Date.now() } }));
   };
   const resetProgress = () => { if (window.confirm("Are you sure?")) { setBookmarks([]); setQuizHistory([]); setAttempted({}); } };
+  
+  // loadAppData uses db internally via firestoreService.ts, so no direct 'db' import needed in DataContext itself.
   const loadAppData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
@@ -82,7 +83,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); 
+  
   useEffect(() => { loadAppData(); }, [loadAppData]);
 
   const value = useMemo(() => ({

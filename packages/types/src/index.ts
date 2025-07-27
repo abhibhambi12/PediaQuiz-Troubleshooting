@@ -5,7 +5,7 @@ export interface MCQ {
   question: string;
   options: string[];
   answer: string;
-  explanation: string;
+  explanation?: string; // Made optional for caching implementation
   chapter: string;
   topic: string;
 }

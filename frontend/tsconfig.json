@@ -5,7 +5,17 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    "moduleResolution": "bundler",
+    // --- IMPORTANT PATH FIXES ---
+    "moduleResolution": "Node", // Changed from "bundler" to "Node" for better module/type resolution
+    "baseUrl": ".", // Base URL for module resolution, relative to tsconfig.json
+    "paths": {
+      // @/ alias is for internal frontend src paths, NOT for @pediaquiz/types now
+      "@/*": ["./src/*"] 
+    },
+    "rootDir": "src", // Specifies the root directory of input files
+    "types": [], // Important: let TS discover types automatically in node_modules/@types/ and from package 'types' fields
+    // --- End IMPORTANT PATH FIXES ---
+
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -14,12 +24,9 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  // Ensure 'src' and 'vite-env.d.ts' are included
+  "include": ["src", "vite-env.d.ts"], 
   "references": [{ "path": "./tsconfig.node.json" }]
 }

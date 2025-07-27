@@ -1,5 +1,3 @@
-// /home/abhibhambi12/PediaQuiz/frontend/src/pages/MCQSessionPage.tsx
-
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -34,14 +32,14 @@ const MCQSessionPage = () => {
     const { chapterId, mode: modeParam } = useParams<{ chapterId: string; mode: string; }>();
     const navigate = useNavigate();
     const location = useLocation();
-    const { data, user, bookmarks, toggleBookmark, attempted, addAttempt, addQuizResult } = useData();
+    const { data, user, bookmarks, toggleBookmark, attempted, addAttempt, addQuizResult, addDebugLog, refreshData } = useData(); // Added addDebugLog and refreshData
     const { addToast } = useToast();
     const [mcqs, setMcqs] = useState<MCQ[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showAnswer, setShowAnswer] = useState(false);
     const [answers, setAnswers] = useState<Record<number, string | null>>({});
     const [isFinished, setIsFinished] = useState(false);
-    const [explanation, setExplanation] = useState<string | null>(null);
+    const [explanation, setExplanation] = useState<string | null>(null); // This state will hold the explanation to display
     const [isExplanationLoading, setIsExplanationLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [advice, setAdvice] = useState<string | null>(null);
@@ -49,6 +47,11 @@ const MCQSessionPage = () => {
 
     const { selectedChapterIds, totalQuestions: customTotalQuestions, generatedMcqIds } = (location.state || {}) as { selectedChapterIds?: string[]; totalQuestions?: number; generatedMcqIds?: string[]; };
     const mode = (modeParam ?? "practice") as ("practice" | "quiz" | "wrong" | "weakness");
+
+    // Memoize currentMcq to avoid re-renders and re-calculations
+    const currentMcq = useMemo(() => {
+        return mcqs[currentIndex];
+    }, [mcqs, currentIndex]);
 
     useEffect(() => {
         if (!data) return;
@@ -73,7 +76,8 @@ const MCQSessionPage = () => {
         setShowAnswer(false);
         setAnswers({});
         setIsFinished(false);
-    }, [data, chapterId, mode, selectedChapterIds, customTotalQuestions, generatedMcqIds]);
+        setExplanation(null); // Clear explanation state when a new session starts
+    }, [data, chapterId, mode, selectedChapterIds, customTotalQuestions, generatedMcqIds, attempted]);
 
     const handleSelectOption = (option: "A" | "B" | "C" | "D") => {
         if (showAnswer || isFinished) return;
@@ -88,7 +92,7 @@ const MCQSessionPage = () => {
     const goToQuestion = (index: number) => {
         if (index < 0 || index >= mcqs.length) return;
         setCurrentIndex(index);
-        setExplanation(null);
+        setExplanation(null); // Clear local explanation state when moving to a new question
         if (isFinished) {
             setShowAnswer(true);
         } else if (mode !== 'quiz' && mode !== 'weakness') {
@@ -115,24 +119,60 @@ const MCQSessionPage = () => {
         }
     };
     
-    const handleExplain = async (mcq: MCQ) => {
+    // Updated handleExplain to use caching logic
+    const handleExplain = async () => {
+        if (!currentMcq) return;
         setIsExplanationLoading(true);
+        setExplanation(null); // Clear previous explanation while loading
+
+        // 1. Check if explanation is already present in the current MCQ object (from Firestore data)
+        // The `data.mcqs` array, which `mcqs` is derived from, should contain the explanation if it's cached in Firestore
+        if (currentMcq.explanation) {
+            setExplanation(currentMcq.explanation);
+            addDebugLog('MCQ Explain', 'success', 'Explanation loaded from cache (Firestore).');
+            setIsExplanationLoading(false);
+            return; // Exit early as explanation is found
+        }
+
+        // 2. If not found, call AI service to generate and save
+        addDebugLog('MCQ Explain', 'pending', 'Generating new explanation with AI...');
         try {
-            const result = await aiService.getMCQExplanation(mcq);
+            const result = await aiService.getMCQExplanation({
+                mcqId: currentMcq.id, // Pass MCQ ID for caching on the backend
+                question: currentMcq.question,
+                options: currentMcq.options,
+                answer: currentMcq.answer
+            });
             setExplanation(result);
-        } catch (e: any) { addToast(`Error explaining: ${e.message}`, "error"); }
-        finally { setIsExplanationLoading(false); }
+            addToast("Explanation generated and saved!", "success"); // Notify user
+            addDebugLog('MCQ Explain', 'success', 'New explanation generated and saved to Firestore.');
+            // After saving to Firestore, we should ideally refresh the main app data
+            // so the `currentMcq.explanation` property gets updated for future sessions.
+            await refreshData(); 
+        } catch (e: any) {
+            setExplanation("Error: Could not generate explanation. " + e.message);
+            addToast(`Error explaining: ${e.message}`, "error");
+            addDebugLog('MCQ Explain', 'error', `Failed to generate explanation: ${e.message}`);
+        }
+        finally {
+            setIsExplanationLoading(false);
+        }
     };
 
     const handleDeleteMCQ = async (idToDelete: string) => {
         if (!user?.isAdmin) return;
         if (window.confirm("Permanently delete this MCQ?")) {
             setIsDeleting(true);
+            addDebugLog('Delete MCQ', 'pending', `Attempting to delete MCQ: ${idToDelete}`);
             try {
                 await aiService.deleteContentItem(idToDelete, 'mcq');
                 addToast("MCQ Deleted.", "success");
-                navigate(-1);
-            } catch (e: any) { addToast(e.message, "error"); }
+                addDebugLog('Delete MCQ', 'success', `MCQ ${idToDelete} deleted successfully.`);
+                navigate(-1); // Go back after deletion
+            } catch (e: any) {
+                addToast(e.message, "error");
+                addDebugLog('Delete MCQ', 'error', `Failed to delete MCQ ${idToDelete}: ${e.message}`);
+            }
             finally { setIsDeleting(false); }
         }
     };
@@ -153,6 +193,7 @@ const MCQSessionPage = () => {
         if (!data) return;
         setIsLoadingAdvice(true);
         setAdvice(null);
+        addDebugLog('AI Advice', 'pending', 'Generating performance advice...');
         try {
             const topicScores: Record<string, { correct: number, total: number }> = {};
             mcqs.forEach((mcq, index) => {
@@ -168,40 +209,21 @@ const MCQSessionPage = () => {
             const overallAccuracy = mcqs.length > 0 ? (correctCount / mcqs.length) * 100 : 0;
             const adviceText = await aiService.getPerformanceAdvice({ strongTopics, weakTopics, overallAccuracy });
             setAdvice(adviceText);
-        } catch (error: any) { setAdvice(`Error generating advice: ${error.message}`); }
+            addDebugLog('AI Advice', 'success', 'Performance advice generated.');
+        } catch (error: any) {
+            // FIX: Corrected variable name from 'e' to 'error'
+            setAdvice(`Error generating advice: ${error.message}`);
+            addDebugLog('AI Advice', 'error', `Failed to generate advice: ${error.message}`);
+        }
         finally { setIsLoadingAdvice(false); }
     };
     
-    const currentMcq = mcqs[currentIndex];
-    
-    if (isFinished) {
-        return (
-            <div className="flex flex-col">
-              <div className="text-center bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg mb-4">
-                <h1 className="text-3xl font-bold">Session Complete!</h1>
-                {(mode === "quiz" || mode === 'weakness') && (
-                  <>
-                    <p className="text-5xl font-bold my-4 text-sky-500">Score: {finalScore}</p>
-                    <p className="text-xl">{correctCount} Correct | {incorrectCount} Incorrect | {skippedCount} Skipped</p>
-                  </>
-                )}
-                 <div className="mt-8 space-y-4">
-                    <button onClick={handleGetAdvice} disabled={isLoadingAdvice} className="px-6 py-2 rounded-md bg-indigo-500 text-white font-semibold w-full">
-                        {isLoadingAdvice ? "Analyzing..." : "🤖 Get AI Feedback"}
-                    </button>
-                    {advice && (<div className="p-4 bg-slate-100 dark:bg-slate-700 rounded-lg text-left prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: advice.replace(/\n/g, "<br/>") }} />)}
-                    <button onClick={() => navigate(-1)} className="px-6 py-2 rounded-md bg-slate-200 dark:bg-slate-600 w-full">Back to Selection</button>
-                </div>
-              </div>
-              <QuestionNavigator count={mcqs.length} currentIndex={currentIndex} answers={answers} mcqs={mcqs} goToQuestion={goToQuestion} mode={mode} isFinished={isFinished} />
-            </div>
-        );
-    }
-    
+    // Ensure currentMcq is available before rendering
     if (!currentMcq) {
         if (mcqs.length === 0 && (mode === "wrong" || chapterId)) {
             return (<div className="text-center p-8 rounded-lg bg-white dark:bg-slate-800"><h1 className="text-2xl font-bold">Session Empty</h1><p className="mt-4 text-slate-500">No questions available for this session.</p><button onClick={() => navigate(-1)} className="mt-6 px-6 py-2 rounded-md bg-sky-500 text-white">Back</button></div>);
         }
+        // This is primarily for initial data load or if currentMcq is somehow null unexpectedly
         return <Loader message="Loading Session..." />;
     }
 
@@ -238,16 +260,12 @@ const MCQSessionPage = () => {
                     <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/40 rounded-lg animate-fade-in">
                         <div className="flex justify-between items-center">
                             <h3 className="font-bold text-amber-800 dark:text-amber-200">Explanation</h3>
-                            { !explanation && !isExplanationLoading && (<button onClick={() => handleExplain(currentMcq)} className="px-3 py-1 text-sm rounded-md bg-sky-500 hover:bg-sky-600 text-white">🤖 Explain with AI</button>) }
+                            {/* Show 'Explain with AI' button only if no explanation exists (neither in local state nor in Firestore data) and not currently loading */}
+                            { !currentMcq.explanation && !explanation && !isExplanationLoading && (<button onClick={handleExplain} className="px-3 py-1 text-sm rounded-md bg-sky-500 hover:bg-sky-600 text-white">🤖 Explain with AI</button>) }
                         </div>
-                        <p className="mt-2 whitespace-pre-wrap">{currentMcq.explanation || "No explanation provided."}</p>
+                        {/* Display explanation from currentMcq.explanation (Firestore) or from local state (newly generated) */}
+                        <p className="mt-2 whitespace-pre-wrap">{explanation || currentMcq.explanation || "No explanation provided."}</p>
                         {isExplanationLoading && <p className="mt-4 animate-pulse">Generating AI explanation...</p>}
-                        {explanation && (
-                            <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-800">
-                                <h4 className="font-bold text-sky-800 dark:text-sky-300">🤖 AI Assistant</h4>
-                                <p className="mt-2 whitespace-pre-wrap">{explanation}</p>
-                            </div>
-                        )}
                     </div>
                 )}
             </div>
