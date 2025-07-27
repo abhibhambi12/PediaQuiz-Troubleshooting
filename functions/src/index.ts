@@ -1,34 +1,10 @@
-
 import {onCall, HttpsError, CallableRequest} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import {VertexAI} from "@google-cloud/vertexai";
+// FIX: Ensure only necessary types are imported.
+import type { MCQ, Flashcard, Topic, Chapter } from "@pediaquiz/types";
 
-// --- START OF TYPE DEFINITIONS ---
-export interface MCQ {
-  id: string;
-  question: string;
-  options: string[];
-  answer: string;
-  explanation?: string; // Made optional as it might not exist initially
-  chapter: string;
-  topic: string;
-}
-export interface Flashcard {
-  front: string;
-  back: string;
-}
-export interface Chapter {
-  id: string;
-  name: string;
-  mcqCount: number;
-}
-export interface Topic {
-  id: string;
-  name: string;
-  chapters: Chapter[];
-}
-// --- END OF TYPE DEFINITIONS ---
 
 admin.initializeApp();
 const log = functions.logger;
@@ -186,7 +162,6 @@ Provide your explanation without conversational filler.`;
   }
 );
 
-// Student/User Function: Generate Performance Advice
 export const generatePerformanceAdvice = onCall(
   CORS_OPTIONS,
   async (request: CallableRequest) => {
@@ -228,7 +203,6 @@ Keep it under 150 words.`;
   }
 );
 
-// Student/User Function: Generate Weakness-Based Test
 export const generateWeaknessBasedTest = onCall(
   CORS_OPTIONS,
   async (request: CallableRequest) => {
@@ -279,7 +253,6 @@ export const generateWeaknessBasedTest = onCall(
       }
     }
 
-    // Fill up with unattempted questions if pool is still too small
     const attemptedIds = new Set(Object.keys(attempted));
     if (questionPool.length < testSize) {
       const unattemptedMcqs = allMcqs
@@ -288,7 +261,6 @@ export const generateWeaknessBasedTest = onCall(
       questionPool.push(...unattemptedMcqs);
     }
 
-    // Shuffle and pick the final test size
     const finalTestIds = [...new Set(questionPool)] // Ensure unique IDs
       .sort(() => 0.5 - Math.random()) // Shuffle
       .slice(0, testSize); // Pick N questions
@@ -320,7 +292,7 @@ export const suggestContentMetrics = onCall(CORS_OPTIONS, async (request: Callab
 // Admin Function: Generate and Classify Content
 export const generateAndClassifyContent = onCall(CORS_OPTIONS, async (request: CallableRequest) => {
   if (!request.auth?.token.isAdmin) {
-    throw new HttpsError("permission-denied", "Admin access required."); // Corrected HttpsError usage
+    throw new HttpsError("permission-denied", "Admin access required."); 
   }
   const { sourceText, existingTopics, mcqCount, flashcardCount } = request.data;
   if (typeof sourceText !== 'string' || !Array.isArray(existingTopics) || typeof mcqCount !== 'number' || typeof flashcardCount !== 'number') {

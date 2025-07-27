@@ -1,14 +1,14 @@
+// PediaQuiz/frontend/vite.config.ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from 'path' // Ensure path is imported for path.resolve
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // CRITICAL FIX: Explicitly tell Rollup how to resolve the alias
-      '@': path.resolve(__dirname, './src'), 
+      '@': path.resolve(__dirname, './src'),
     },
   },
 })

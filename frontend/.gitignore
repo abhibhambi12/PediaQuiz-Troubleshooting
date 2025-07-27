@@ -1,47 +1,24 @@
-# /PediaQuiz/.gitignore
-
-# Dependencies
-node_modules
-/frontend/node_modules
-
-# Build output
-dist
-/frontend/dist
-
 # Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+node_modules
+dist
+dist-ssr
+*.local
 
-# Local Environment Variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.*.local
-
-# IDEs and editors
-.idea
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+.idea
 .DS_Store
-
-# Miscellaneous
-*.pem
-*.key
-
-# Genkit files
-.genkit/cache
-.genkit/log
-.genkit/traces
-
-# Firebase Service Account Key - DO NOT COMMIT
-service-account.json
-
-# Local Admin Utility Script - DO NOT COMMIT
-setAdmin.js
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

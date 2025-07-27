@@ -1,11 +1,10 @@
-
 {
   "compilerOptions": {
-    "composite": true,
+    "composite": true, // CRITICAL FIX: Required for referenced projects
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts"] // Ensure this points to vite.config.ts, NOT vite.config.cjs
 }

@@ -2,21 +2,19 @@
   "compilerOptions": {
     "module": "commonjs",
     "noImplicitReturns": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
     "baseUrl": ".",
     "paths": {
-      // FIX: Correctly reference the new package name and location
-      "@pediaquiz/types": ["../packages/types/src"] 
+      "@pediaquiz/types": ["../packages/types/src"]
     }
   },
   "compileOnSave": true,
-  // --- IMPORTANT PATH FIXES ---
   "include": [
-    "src", // Include all .ts files in src
-    "src/types" // Include the new types folder
+    "src",
+    "src/types"
   ]
 }

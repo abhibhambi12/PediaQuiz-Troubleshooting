@@ -1,8 +1,7 @@
 // /PediaQuiz/frontend/vite-env.d.ts
 
 /// <reference types="vite/client" />
-/// <reference types="node" />    <-- ADDED THIS LINE
-// No need for <reference types="firebase" /> as firebase itself provides types
+/// <reference types="node" />    
 
 // Extend ImportMetaEnv for Vite's environment variables
 interface ImportMetaEnv {
